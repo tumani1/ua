@@ -4,7 +4,6 @@ import (
 	"os"
 	"log"
 	"bufio"
-	"encoding/json"
 	"path/filepath"
 
 	uaparser "../uaparser"
@@ -116,20 +115,21 @@ func (ua *UserAgent) parseUA(user_agent string) *uaparser.Client {
 }
 
 func (ua *UserAgent) parseUAWithLRU(user_agent string) *uaparser.Client {
-	val, ok := ua.lruCache.Get(user_agent)
-	if !ok {
-		client := ua.parseUAWg(user_agent)
-		if serialized, err := json.Marshal(client); err == nil {
-			ua.lruCache.Add(user_agent, string(serialized))
-		}
-
-		return client
+	if val, ok := ua.lruCache.Get(user_agent); ok {
+		return val.(*uaparser.Client)
 	}
 
-	var deserialized *uaparser.Client = new(uaparser.Client)
-	if err := json.Unmarshal([]byte(val.(string)), deserialized); err != nil {
-		log.Println("Err unmarshal operation", err)
+	c := ua.parseUAWg(user_agent)
+	ua.lruCache.Add(user_agent, c)
+	return c
+}
+
+func (ua *UserAgent) parseUAWithLRUWithoutWG(user_agent string) *uaparser.Client {
+	if val, ok := ua.lruCache.Get(user_agent); ok {
+		return val.(*uaparser.Client)
 	}
 
-	return deserialized
+	c := ua.parseUA(user_agent)
+	ua.lruCache.Add(user_agent, c)
+	return c
 }

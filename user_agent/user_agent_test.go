@@ -81,3 +81,9 @@ func BenchmarkParseUAWithLRU(b *testing.B) {
 		ua.parseUAWithLRU(randomUA)
 	}
 }
+
+func BenchmarkParseUAWithLRUWithoutWG(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		ua.parseUAWithLRU(randomUA)
+	}
+}
